@@ -12,7 +12,7 @@ const CORNER_INFO={start:{icon:'🚩',label:'START',bg:'#a8d8b0'},bonus:{icon:'�
 let turn=0,round=1,phase='ready',choices=[],correctIndex=-1,lastRoll=0,hop=0,epoch=0,seen=new Set();
 const TIMER_TOTAL=7*60;let timerSeconds=TIMER_TOTAL,timerInterval=null,timerStarted=false;
 function renderTimer(){const m=Math.floor(timerSeconds/60),s=timerSeconds%60;$('#timer-display').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;const el=$('#header-timer');el.classList.toggle('warning',timerSeconds>0&&timerSeconds<=60);el.classList.toggle('done',timerSeconds<=0)}
-function startTimer(){if(timerStarted)return;timerStarted=true;renderTimer();timerInterval=setInterval(()=>{timerSeconds=Math.max(0,timerSeconds-1);renderTimer();if(timerSeconds<=0){clearInterval(timerInterval);timerInterval=null}},1000)}
+function startTimer(){if(timerStarted)return;timerStarted=true;renderTimer();timerInterval=setInterval(()=>{timerSeconds=Math.max(0,timerSeconds-1);renderTimer();if(timerSeconds<=0){clearInterval(timerInterval);timerInterval=null;if(phase!=='finished'){epoch++;clearQuestionTimer();showFinalResults()}}},1000)}
 function resetTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null}timerStarted=false;timerSeconds=TIMER_TOTAL;renderTimer()}
 let width=0,height=0,unit=1,ox=0,oy=0;
 const DICE=['⚀','⚁','⚂','⚃','⚄','⚅'];
