@@ -4,8 +4,8 @@
     {
       "name": "vocab-island",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8934", "--directory", "dist"],
-      "port": 8934
+      "runtimeArgs": ["-m", "http.server", "8935", "--directory", "dist"],
+      "port": 8935
     }
   ]
 }
