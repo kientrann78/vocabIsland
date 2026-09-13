@@ -20,6 +20,23 @@ function box(x,z,y,w,d,h,top,left,right){polygon([[x,z,y+h],[x+w,z,y+h],[x+w,z+d
 function tree(x,z,s=1){box(x-.08,z-.08,.08,.16,.16,.6*s,'#b49a86','#b49a86','#987f6c');let y=.5;for(let i=0;i<2;i++){let r=(.5-i*.13)*s;polygon([[x-r,z-r,y],[x+r,z-r,y],[x,z,y+1*s]],'#9fc6ac');polygon([[x+r,z-r,y],[x+r,z+r,y],[x,z,y+1*s]],'#75ac91');polygon([[x+r,z+r,y],[x-r,z+r,y],[x,z,y+1*s]],'#87bba0');y+=.5*s}}
 function house(x,z,s=1,color='#d8b7ca'){box(x,z,.06,s,s,s*.7,'#f7ebd7','#f6e6cf','#deceb9');polygon([[x-.1,z-.1,.7*s],[x+s+.1,z-.1,.7*s],[x+s/2,z-.1,1.25*s]],color);polygon([[x+s+.1,z-.1,.7*s],[x+s+.1,z+s+.1,.7*s],[x+s/2,z+s+.1,1.25*s],[x+s/2,z-.1,1.25*s]],'#ab88b4');polygon([[x-.1,z-.1,.7*s],[x+s/2,z-.1,1.25*s],[x+s/2,z+s+.1,1.25*s],[x-.1,z+s+.1,.7*s]],color);box(x+s*.36,z+s+.005,.06,s*.26,.01,s*.4,'#a88d84','#a88d84','#a88d84')}
 function jailIcon(cx,cy,s){ctx.save();const barW=s*.13,gap=(s-4*barW)/3,frameW=s*.9;ctx.fillStyle='#181818';for(let k=0;k<4;k++)ctx.fillRect(cx-frameW/2+k*(barW+gap),cy-s/2,barW,s);ctx.fillRect(cx-frameW/2,cy-s/2,frameW,s*.13);ctx.fillRect(cx-frameW/2,cy+s*.5-s*.13,frameW,s*.13);const lockW=s*.42,lockH=s*.34,lx=cx-lockW/2,ly=cy-lockH*.05;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(lx,ly,lockW,lockH,lockW*.2);else ctx.rect(lx,ly,lockW,lockH);ctx.fillStyle='#181818';ctx.fill();ctx.strokeStyle='#181818';ctx.lineWidth=s*.065;ctx.beginPath();ctx.arc(cx,ly,lockW*.3,Math.PI,0);ctx.stroke();ctx.fillStyle='#f3efe4';ctx.beginPath();ctx.arc(cx,ly+lockH*.42,lockH*.13,0,Math.PI*2);ctx.fill();ctx.fillRect(cx-lockH*.05,ly+lockH*.42,lockH*.1,lockH*.4);ctx.restore()}
+const boardBackground = new Image();
+let backgroundReady = false;
+function loadBoardBackground(){
+  boardBackground.onload = () => { backgroundReady = true; draw(); };
+  boardBackground.src = new URL('assets/backgrounds/trade-world.png', document.baseURI).href;
+}
+function drawBoardBackground(){
+  if(!backgroundReady || !width || !height)return;
+  ctx.fillStyle='#cbd5fb';
+  ctx.fillRect(0,0,width,height);
+  const scale=Math.min(width/boardBackground.naturalWidth,height/boardBackground.naturalHeight);
+  const w=boardBackground.naturalWidth*scale,h=boardBackground.naturalHeight*scale;
+  ctx.drawImage(boardBackground,(width-w)/2,(height-h)/2,w,h);
+  const wash=ctx.createLinearGradient(0,0,0,180);
+  wash.addColorStop(0,'#f3f1fbe6');wash.addColorStop(1,'#f3f1fb00');
+  ctx.fillStyle=wash;ctx.fillRect(0,0,width,180);
+}
 const tokenSprites = new Map();
 function loadTokenSprites(){
   for(const t of teams){
@@ -60,7 +77,7 @@ function seenBadge(x,z){const q=project(x+2.55,z+.45,.5);ctx.fillStyle='#0000005
 function innerStripe(x,z,i,color){const leg=Math.floor(i/5);if(leg===0)box(x+.13,z+2.51,.345,2.72,.34,.03,color,color,color);else if(leg===2)box(x+.13,z+.13,.345,2.72,.34,.03,color,color,color);else if(leg===1)box(x+.13,z+.13,.345,.34,2.72,.03,color,color,color);else box(x+2.51,z+.13,.345,.34,2.72,.03,color,color,color)}
 function specialTile(x,z,i,type){const bg=CORNER_INFO[type].bg;box(x+.05,z+.05,0,2.88,2.88,.3,bg,'#8d9a95','#7c8d88');box(x+.13,z+.13,.3,2.72,2.72,.04,'#faf7ee','#ebe5d9','#d4d6cc');const q=project(x+1.5,z+1.5,.38);ctx.textAlign='center';if(type==='jail'){jailIcon(q[0],q[1]-unit*.4,unit*1.1)}else{ctx.font=`${unit*1.05}px Segoe UI`;ctx.fillText(CORNER_INFO[type].icon,q[0],q[1]-unit*.05)}ctx.fillStyle='#4a4438';ctx.font=`700 ${Math.max(9,unit*.25)}px Segoe UI`;ctx.fillText(CORNER_INFO[type].label,q[0],q[1]+unit*.8);highlightIfCurrent(x,z,i)}
 function vocabTile(x,z,i){const c=['#e4b2ba','#b5cce7','#ead6a4','#b4d9c7'][Math.floor(i/5)];box(x+.05,z+.05,0,2.88,2.88,.3,c,'#b8b9c5','#a6acb7');box(x+.13,z+.13,.3,2.72,2.72,.04,'#faf7ee','#ebe5d9','#d4d6cc');innerStripe(x,z,i,c);const q=project(x+1.5,z+1.5,.38);ctx.textAlign='center';ctx.fillStyle='#625b75';ctx.font=`800 ${Math.max(16,unit*.75)}px Segoe UI`;ctx.fillText(String(vocabIndexAt[i]+1).padStart(2,'0'),q[0],q[1]);if(seen.has(i))seenBadge(x,z);highlightIfCurrent(x,z,i)}
-function draw(){ctx.clearRect(0,0,width,height);const shadow=project(9,9,-.9);ctx.fillStyle='#738ba622';ctx.beginPath();ctx.ellipse(...shadow,unit*17.3,unit*8.85,0,0,Math.PI*2);ctx.fill();box(-.16,-.16,-.55,18.32,18.32,.55,'#dce4da','#b9c8c0','#a8bbb8');const HS=4/3,savedUnit=unit,savedOy=oy;unit=savedUnit*HS;oy=savedOy-1.02*savedUnit;harbor();unit=savedUnit;oy=savedOy;path.map(([x,z],i)=>({x,z,i})).sort((a,b)=>(a.x+a.z)-(b.x+b.z)).forEach(({x,z,i})=>{const type=CORNER_TYPES[i];if(type)specialTile(x,z,i,type);else vocabTile(x,z,i)});teams.map((t,i)=>({t,i})).sort((a,b)=>a.t.point[0]+a.t.point[1]-b.t.point[0]-b.t.point[1]).forEach(({t,i})=>animal(t,i))}
+function draw(){ctx.clearRect(0,0,width,height);drawBoardBackground();const shadow=project(9,9,-.9);ctx.fillStyle='#738ba622';ctx.beginPath();ctx.ellipse(...shadow,unit*17.3,unit*8.85,0,0,Math.PI*2);ctx.fill();if(!backgroundReady){box(-.16,-.16,-.55,18.32,18.32,.55,'#dce4da','#b9c8c0','#a8bbb8');const HS=4/3,savedUnit=unit,savedOy=oy;unit=savedUnit*HS;oy=savedOy-1.02*savedUnit;harbor();unit=savedUnit;oy=savedOy;}path.map(([x,z],i)=>({x,z,i})).sort((a,b)=>(a.x+a.z)-(b.x+b.z)).forEach(({x,z,i})=>{const type=CORNER_TYPES[i];if(type)specialTile(x,z,i,type);else vocabTile(x,z,i)});teams.map((t,i)=>({t,i})).sort((a,b)=>a.t.point[0]+a.t.point[1]-b.t.point[0]-b.t.point[1]).forEach(({t,i})=>animal(t,i))}
 function resize(){const r=canvas.getBoundingClientRect();width=r.width;height=r.height;canvas.width=width*devicePixelRatio;canvas.height=height*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);unit=Math.max(3,Math.min((width-40)/38,(height-40)/24));ox=width/2;oy=height/2-unit*8.4+20;draw()}
 new ResizeObserver(resize).observe(canvas);
 function update(){const t=teams[turn];document.documentElement.style.setProperty('--team',t.color);$('#team-name').textContent='Team '+t.name;$('#team-avatar').textContent=t.emoji;$('#team-dot').style.background=t.color;$('#round').textContent=round;$('#scoreboard').innerHTML=teams.map((t,i)=>`<div class="team-score ${i===turn?'active':''}" style="--color:${t.color}"><div class="score-name">${t.emoji} ${t.name}</div><strong>${t.score}</strong><small>points</small><span class="turn-label">${i===turn?'Playing':tileLabel(t.pos)}</span></div>`).join('');draw()}
@@ -82,5 +99,5 @@ $('#roll').onclick=roll;$('#show-question').onclick=question;$('#next').onclick=
 const getState=()=>({phase,activeTeam:teams[turn].name,round,lastRoll,teams:teams.map(t=>({name:t.name,score:t.score,tile:t.pos+1})),term:phase==='question'?vocab[vocabIndexAt[teams[turn].pos]].term:null,options:phase==='question'?[...choices]:[],wordCount:vocab.length});
 window.vocabGame={getState,roll,answer,next};
 if(document.modelContext?.registerTool){const result=()=>({content:[{type:'text',text:JSON.stringify(getState())}]});const registrations=[{name:'roll_dice',description:'Roll and move the current team 1–6 tiles.',inputSchema:{type:'object',properties:{}},execute:async()=>{if(phase!=='ready')throw new Error('Complete the current turn first');await roll();return result()}},{name:'answer_vocabulary',description:'Choose option 1–3 and award the current team 10 points if correct.',inputSchema:{type:'object',properties:{option:{type:'integer',minimum:1,maximum:3}},required:['option']},execute:async({option})=>{if(phase!=='question'||!Number.isInteger(option)||option<1||option>3)throw new Error('Choose option 1–3 during a question');answer(option-1);return result()}},{name:'next_team',description:'Finish the answered question and switch to the next team.',inputSchema:{type:'object',properties:{}},execute:async()=>{if(phase!=='result')throw new Error('Answer first');next();return result()}}];for(const tool of registrations){try{Promise.resolve(document.modelContext.registerTool({...tool,annotations:{readOnlyHint:false}})).catch(()=>{})}catch{}}}
-ready();resize();loadTokenSprites();
+ready();resize();loadTokenSprites();loadBoardBackground();
 })();
