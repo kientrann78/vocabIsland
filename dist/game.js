@@ -20,7 +20,29 @@ function box(x,z,y,w,d,h,top,left,right){polygon([[x,z,y+h],[x+w,z,y+h],[x+w,z+d
 function tree(x,z,s=1){box(x-.08,z-.08,.08,.16,.16,.6*s,'#b49a86','#b49a86','#987f6c');let y=.5;for(let i=0;i<2;i++){let r=(.5-i*.13)*s;polygon([[x-r,z-r,y],[x+r,z-r,y],[x,z,y+1*s]],'#9fc6ac');polygon([[x+r,z-r,y],[x+r,z+r,y],[x,z,y+1*s]],'#75ac91');polygon([[x+r,z+r,y],[x-r,z+r,y],[x,z,y+1*s]],'#87bba0');y+=.5*s}}
 function house(x,z,s=1,color='#d8b7ca'){box(x,z,.06,s,s,s*.7,'#f7ebd7','#f6e6cf','#deceb9');polygon([[x-.1,z-.1,.7*s],[x+s+.1,z-.1,.7*s],[x+s/2,z-.1,1.25*s]],color);polygon([[x+s+.1,z-.1,.7*s],[x+s+.1,z+s+.1,.7*s],[x+s/2,z+s+.1,1.25*s],[x+s/2,z-.1,1.25*s]],'#ab88b4');polygon([[x-.1,z-.1,.7*s],[x+s/2,z-.1,1.25*s],[x+s/2,z+s+.1,1.25*s],[x-.1,z+s+.1,.7*s]],color);box(x+s*.36,z+s+.005,.06,s*.26,.01,s*.4,'#a88d84','#a88d84','#a88d84')}
 function jailIcon(cx,cy,s){ctx.save();const barW=s*.13,gap=(s-4*barW)/3,frameW=s*.9;ctx.fillStyle='#181818';for(let k=0;k<4;k++)ctx.fillRect(cx-frameW/2+k*(barW+gap),cy-s/2,barW,s);ctx.fillRect(cx-frameW/2,cy-s/2,frameW,s*.13);ctx.fillRect(cx-frameW/2,cy+s*.5-s*.13,frameW,s*.13);const lockW=s*.42,lockH=s*.34,lx=cx-lockW/2,ly=cy-lockH*.05;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(lx,ly,lockW,lockH,lockW*.2);else ctx.rect(lx,ly,lockW,lockH);ctx.fillStyle='#181818';ctx.fill();ctx.strokeStyle='#181818';ctx.lineWidth=s*.065;ctx.beginPath();ctx.arc(cx,ly,lockW*.3,Math.PI,0);ctx.stroke();ctx.fillStyle='#f3efe4';ctx.beginPath();ctx.arc(cx,ly+lockH*.42,lockH*.13,0,Math.PI*2);ctx.fill();ctx.fillRect(cx-lockH*.05,ly+lockH*.42,lockH*.1,lockH*.4);ctx.restore()}
-function animal(t,i){const x=t.point[0]+.4+(i%2)*1.05,z=t.point[1]+.48+Math.floor(i/2)*1.05,y=.47+(i===turn?hop:0);box(x-.08,z-.08,y,.8,.8,.1,t.color,t.color,t.color);box(x+.05,z+.05,y+.1,.55,.5,.48,t.fur,t.fur,t.fur);box(x+.01,z+.01,y+.54,.62,.58,.43,t.fur,t.fur,t.fur);
+const tokenSprites = new Map();
+function loadTokenSprites(){
+  for(const t of teams){
+    const sprite = new Image();
+    sprite.onload = () => { tokenSprites.set(t.animal, sprite); draw(); };
+    sprite.src = new URL(`assets/tokens/${t.animal.toLowerCase()}.png`, document.baseURI).href;
+  }
+}
+function animal(t,i){
+  const sprite = tokenSprites.get(t.animal);
+  if(!sprite){drawFallbackAnimal(t,i);return;}
+  const x=t.point[0]+.75+(i%2)*1.2,z=t.point[1]+.75+Math.floor(i/2)*1.2;
+  const p=project(x,z,.35+(i===turn?hop:0));
+  const h=unit*2.5,w=h*sprite.naturalWidth/sprite.naturalHeight;
+  ctx.drawImage(sprite,p[0]-w/2,p[1]-h,w,h);
+  if(i===turn){
+    ctx.fillStyle=t.color;
+    ctx.font=`bold ${Math.max(13,unit*.39)}px Segoe UI`;
+    ctx.textAlign='center';
+    ctx.fillText('▼',p[0],p[1]-h-unit*.12);
+  }
+}
+function drawFallbackAnimal(t,i){const x=t.point[0]+.4+(i%2)*1.05,z=t.point[1]+.48+Math.floor(i/2)*1.05,y=.47+(i===turn?hop:0);box(x-.08,z-.08,y,.8,.8,.1,t.color,t.color,t.color);box(x+.05,z+.05,y+.1,.55,.5,.48,t.fur,t.fur,t.fur);box(x+.01,z+.01,y+.54,.62,.58,.43,t.fur,t.fur,t.fur);
 if(i===0||i===3){polygon([[x+.02,z+.57,y+.97],[x+.2,z+.57,y+.97],[x+.02,z+.57,y+1.2]],i===0?'#eabca8':'#d98d9f');polygon([[x+.43,z+.57,y+.97],[x+.62,z+.57,y+.97],[x+.62,z+.57,y+1.2]],i===0?'#eabca8':'#d98d9f')}
 if(i===1){box(x-.11,z+.5,y+.51,.2,.29,.45,'#9f7967','#9f7967','#8e6857');box(x+.57,z+.55,y+.51,.2,.27,.45,'#9f7967','#9f7967','#8e6857')}
 if(i===2){box(x+.17,z+.47,y+.97,.22,.2,.22,'#dd727a','#dc6470','#c7505b');polygon([[x+.24,z-.01,y+.68],[x+.42,z-.01,y+.68],[x+.33,z-.28,y+.59]],'#e6b547')}
@@ -60,5 +82,5 @@ $('#roll').onclick=roll;$('#show-question').onclick=question;$('#next').onclick=
 const getState=()=>({phase,activeTeam:teams[turn].name,round,lastRoll,teams:teams.map(t=>({name:t.name,score:t.score,tile:t.pos+1})),term:phase==='question'?vocab[vocabIndexAt[teams[turn].pos]].term:null,options:phase==='question'?[...choices]:[],wordCount:vocab.length});
 window.vocabGame={getState,roll,answer,next};
 if(document.modelContext?.registerTool){const result=()=>({content:[{type:'text',text:JSON.stringify(getState())}]});const registrations=[{name:'roll_dice',description:'Roll and move the current team 1–6 tiles.',inputSchema:{type:'object',properties:{}},execute:async()=>{if(phase!=='ready')throw new Error('Complete the current turn first');await roll();return result()}},{name:'answer_vocabulary',description:'Choose option 1–3 and award the current team 10 points if correct.',inputSchema:{type:'object',properties:{option:{type:'integer',minimum:1,maximum:3}},required:['option']},execute:async({option})=>{if(phase!=='question'||!Number.isInteger(option)||option<1||option>3)throw new Error('Choose option 1–3 during a question');answer(option-1);return result()}},{name:'next_team',description:'Finish the answered question and switch to the next team.',inputSchema:{type:'object',properties:{}},execute:async()=>{if(phase!=='result')throw new Error('Answer first');next();return result()}}];for(const tool of registrations){try{Promise.resolve(document.modelContext.registerTool({...tool,annotations:{readOnlyHint:false}})).catch(()=>{})}catch{}}}
-ready();resize();
+ready();resize();loadTokenSprites();
 })();
